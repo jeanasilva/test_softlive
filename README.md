@@ -1,13 +1,13 @@
-﻿# Digital Wallet API
+# Digital Wallet API (Softlive test)
 
-NestJS service that manages users, wallets and peer to peer transactions backed by SQLite. The project ships with automatic validation, Swagger documentation and transactional balance updates.
+NestJS service that manages users, wallets and peer-to-peer transactions backed by SQLite. Ships with validation, Swagger, JWT auth and transactional balance updates.
 
 ## Requirements
 
 - Node.js 18+
 - npm 10+
 
-The application stores data in `data/database.sqlite`. The file is created automatically on the first run.
+The application stores data in `data/database.sqlite` (auto-created on first run).
 
 ## Setup
 
@@ -18,32 +18,78 @@ npm install
 ## Running
 
 ```bash
-# development with live reload
+# development (watch)
 npm run start:dev
 
-# production build
+# production
 npm run build
 npm run start:prod
 ```
 
-Once the app is running the HTTP server listens on http://localhost:3000.
+Server: http://localhost:3000
 
-## API Documentation
+## API Docs (Swagger)
 
-Interactive documentation is generated through Swagger and is available at http://localhost:3000/api-docs.
+Swagger UI: http://localhost:3000/api-docs
 
-Authentication:
-- Register: `POST /auth/register` with name, email, password (public)
-- Login: `POST /auth/login` with email/password to obtain a JWT
-Send the token as `Authorization: Bearer <token>` for protected endpoints (wallets, transactions, list/get users).
+- Use “Authorize” with a JWT for protected routes.
 
-## Functional Areas
+## Environment Variables
 
-- **Users**: register new users and list existing ones (JWT-protected). Email uniqueness is enforced and passwords are stored as bcrypt hashes.
-- **Wallets**: create wallets in supported currencies (BRL, USD, EUR), fetch wallet details and retrieve balances.
-- **Transactions**: create transfers between wallets using ACID transactions and list historical operations.
+- `DATABASE_FILE` (optional): SQLite file path (default `data/database.sqlite`).
+- `JWT_SECRET` (optional): HS256 secret (default `dev-secret-change-me`, change in production).
+- `JWT_EXPIRES_IN` (optional): token expiration in seconds (default `86400`).
 
-All list endpoints support pagination via `page` and `limit` query params.
+## Authentication Flow
+
+1) Register (public)
+- `POST /auth/register`
+  - body: `{ "name": "Alice", "email": "alice@example.com", "password": "s3cret!" }`
+  - returns: user without password
+
+2) Login
+- `POST /auth/login`
+  - body: `{ "email": "alice@example.com", "password": "s3cret!" }`
+  - returns: `{ "accessToken": "<JWT>" }`
+
+3) Auth header
+- `Authorization: Bearer <token>`
+
+Note: `POST /users` also creates a user (public), but prefer `/auth/register` for onboarding.
+
+## Routes
+
+Auth
+- `POST /auth/register` (public) — create user
+- `POST /auth/login` (public) — obtain JWT
+
+Users
+- `POST /users` (public) — create user
+- `GET /users` (JWT) — list users with `?page=&limit=`
+- `GET /users/:id` (JWT) — get a user by id
+
+Wallets (JWT)
+- `POST /wallets` — create wallet `{ userId, currency }` (supported: `BRL`, `USD`, `EUR`)
+- `GET /wallets/:id` — wallet details
+- `GET /wallets/:id/balance` — wallet balance
+
+Transactions (JWT)
+- `POST /transactions` — create transfer `{ fromWalletId, toWalletId, amount, transactionId? }`
+- `GET /transactions` — list, supports `?page=&limit=`
+
+## Domain Rules
+
+- Users: unique email; passwords hashed (bcrypt)
+- Wallets: decimal balance with SQLite transformer; belongs to a user
+- Transactions: atomic transfer with QueryRunner; refuses same-wallet, checks available funds; status saved as `simple-enum`
+
+## Pagination
+
+List endpoints accept `page` (>=1) and `limit` (1..100). Example: `GET /users?page=1&limit=10`.
+
+## Development Tips
+
+- Using `synchronize: true`. If entities change locally, delete `data/database.sqlite` to regenerate the schema.
 
 ## Testing
 
@@ -51,13 +97,13 @@ All list endpoints support pagination via `page` and `limit` query params.
 npm run test
 ```
 
-Use `npm run lint` and `npm run format` to keep the codebase consistent.
+## Lint / Format
+
+```bash
+npm run lint
+npm run format
+```
 
 ## License
 
-This project is provided under the MIT license.
-
-Environment variables:
-- `DATABASE_FILE` (optional): path to SQLite file (default `data/database.sqlite`).
-- `JWT_SECRET` (optional): secret key for JWT HS256 (default `dev-secret-change-me`, change in production).
-- `JWT_EXPIRES_IN` (optional): token expiration in seconds (default `86400`).
+MIT
