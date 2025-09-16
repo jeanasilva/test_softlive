@@ -9,18 +9,17 @@ export class JwtAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
     const auth = request.headers['authorization'] as string | undefined;
-    if (!auth) throw new UnauthorizedException('Missing Authorization header');
+    if (!auth) throw new UnauthorizedException('Cabeçalho Authorization ausente');
     const [scheme, token] = auth.split(' ');
     if (!scheme || scheme.toLowerCase() !== 'bearer' || !token) {
-      throw new UnauthorizedException('Invalid Authorization format');
+      throw new UnauthorizedException('Formato do Authorization inválido');
     }
 
     const secret = this.configService.get<string>('JWT_SECRET') ?? 'dev-secret-change-me';
     const payload = verifyJwtHS256(token, secret);
-    if (!payload) throw new UnauthorizedException('Invalid or expired token');
+    if (!payload) throw new UnauthorizedException('Token inválido ou expirado');
 
     request.user = payload;
     return true;
   }
 }
-

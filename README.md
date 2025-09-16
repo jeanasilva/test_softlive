@@ -1,109 +1,109 @@
-# Digital Wallet API (Softlive test)
+# Digital Wallet API (Teste Softlive)
 
-NestJS service that manages users, wallets and peer-to-peer transactions backed by SQLite. Ships with validation, Swagger, JWT auth and transactional balance updates.
+Serviço em NestJS para gerenciar usuários, carteiras e transações P2P utilizando SQLite. Inclui validação automática, documentação Swagger, autenticação JWT e atualização transacional de saldos.
 
-## Requirements
+## Requisitos
 
 - Node.js 18+
 - npm 10+
 
-The application stores data in `data/database.sqlite` (auto-created on first run).
+O banco de dados é criado automaticamente em `data/database.sqlite` na primeira execução.
 
-## Setup
+## Instalação
 
 ```bash
 npm install
 ```
 
-## Running
+## Execução
 
 ```bash
-# development (watch)
+# desenvolvimento (watch)
 npm run start:dev
 
-# production
+# produção
 npm run build
 npm run start:prod
 ```
 
-Server: http://localhost:3000
+Servidor: http://localhost:3000
 
-## API Docs (Swagger)
+## Documentação (Swagger)
 
 Swagger UI: http://localhost:3000/api-docs
 
-- Use “Authorize” with a JWT for protected routes.
+- Clique em “Authorize” e informe o JWT para acessar rotas protegidas.
 
-## Environment Variables
+## Variáveis de Ambiente
 
-- `DATABASE_FILE` (optional): SQLite file path (default `data/database.sqlite`).
-- `JWT_SECRET` (optional): HS256 secret (default `dev-secret-change-me`, change in production).
-- `JWT_EXPIRES_IN` (optional): token expiration in seconds (default `86400`).
+- `DATABASE_FILE` (opcional): caminho do arquivo SQLite (padrão `data/database.sqlite`).
+- `JWT_SECRET` (opcional): segredo HS256 (padrão `dev-secret-change-me`, altere em produção).
+- `JWT_EXPIRES_IN` (opcional): expiração do token em segundos (padrão `86400`).
 
-## Authentication Flow
+## Fluxo de Autenticação
 
-1) Register (public)
+1) Registro (público)
 - `POST /auth/register`
-  - body: `{ "name": "Alice", "email": "alice@example.com", "password": "s3cret!" }`
-  - returns: user without password
+  - corpo: `{ "name": "Alice", "email": "alice@example.com", "password": "s3cret!" }`
+  - retorno: usuário sem senha
 
 2) Login
 - `POST /auth/login`
-  - body: `{ "email": "alice@example.com", "password": "s3cret!" }`
-  - returns: `{ "accessToken": "<JWT>" }`
+  - corpo: `{ "email": "alice@example.com", "password": "s3cret!" }`
+  - retorno: `{ "accessToken": "<JWT>" }`
 
-3) Auth header
-- `Authorization: Bearer <token>`
+3) Autorização
+- Envie o header: `Authorization: Bearer <token>`
 
-Note: `POST /users` also creates a user (public), but prefer `/auth/register` for onboarding.
+Observação: `POST /users` também cria usuário (público), mas recomenda-se usar `/auth/register` para onboarding.
 
-## Routes
+## Rotas
 
 Auth
-- `POST /auth/register` (public) — create user
-- `POST /auth/login` (public) — obtain JWT
+- `POST /auth/register` (público) — cria usuário
+- `POST /auth/login` (público) — obtém JWT
 
 Users
-- `POST /users` (public) — create user
-- `GET /users` (JWT) — list users with `?page=&limit=`
-- `GET /users/:id` (JWT) — get a user by id
+- `POST /users` (público) — cria usuário
+- `GET /users` (JWT) — lista usuários com `?page=&limit=`
+- `GET /users/:id` (JWT) — busca usuário por id
 
 Wallets (JWT)
-- `POST /wallets` — create wallet `{ userId, currency }` (supported: `BRL`, `USD`, `EUR`)
-- `GET /wallets/:id` — wallet details
-- `GET /wallets/:id/balance` — wallet balance
+- `POST /wallets` — cria carteira `{ userId, currency }` (suportadas: `BRL`, `USD`, `EUR`)
+- `GET /wallets/:id` — detalhes da carteira
+- `GET /wallets/:id/balance` — saldo da carteira
 
 Transactions (JWT)
-- `POST /transactions` — create transfer `{ fromWalletId, toWalletId, amount, transactionId? }`
-- `GET /transactions` — list, supports `?page=&limit=`
+- `POST /transactions` — cria transferência `{ fromWalletId, toWalletId, amount, transactionId? }`
+- `GET /transactions` — lista, suporta `?page=&limit=`
 
-## Domain Rules
+## Regras de Domínio
 
-- Users: unique email; passwords hashed (bcrypt)
-- Wallets: decimal balance with SQLite transformer; belongs to a user
-- Transactions: atomic transfer with QueryRunner; refuses same-wallet, checks available funds; status saved as `simple-enum`
+- Users: e-mail único; senhas com hash (bcrypt)
+- Wallets: saldo decimal com transformador para SQLite; pertence a um usuário
+- Transactions: transferência atômica com QueryRunner; impede mesma carteira, valida saldo; status salvo como `simple-enum`
 
-## Pagination
+## Paginação
 
-List endpoints accept `page` (>=1) and `limit` (1..100). Example: `GET /users?page=1&limit=10`.
+Listagens aceitam `page` (>=1) e `limit` (1..100). Ex.: `GET /users?page=1&limit=10`.
 
-## Development Tips
+## Dicas de Desenvolvimento
 
-- Using `synchronize: true`. If entities change locally, delete `data/database.sqlite` to regenerate the schema.
+- Usando `synchronize: true`. Se alterar entidades localmente, exclua `data/database.sqlite` para regenerar o schema.
 
-## Testing
+## Testes
 
 ```bash
 npm run test
 ```
 
-## Lint / Format
+## Lint / Formatação
 
 ```bash
 npm run lint
 npm run format
 ```
 
-## License
+## Licença
 
 MIT
